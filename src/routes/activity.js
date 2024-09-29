@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/user");
+const Song = require("../models/song");
 const fetch = require("node-fetch");
 const Token = require("../models/tenantTokens");
 const { refreshToken } = require("../utils/refreshToken");
@@ -34,14 +35,67 @@ router.post("/updateCurrentLocation", async (req, res) => {
 
   if (user) {
     console.log(user);
+
     const result = await User.updateOne(
       { _id: user.id },
       {
         $set: { location: { coordinates: coordinates } },
       }
     );
-    res.json(result);
+    const nearByUsers = await User.find({
+      location: {
+        $nearSphere: {
+          $geometry: {
+            type: "Point",
+            // coordinates: [6.5279623, 3.3910865999999997],
+            coordinates: currentUser.location.coordinates,
+          },
+          $maxDistance: 100000,
+        },
+      },
+      _id: {
+        $ne: userId,
+      },
+    });
+    res.json({ result });
   }
+  res.json();
+});
+
+router.get("/updateRecentTracks", async (req, res) => {
+  console.log(req);
+  const { userId } = req.query;
+  console.log(userId);
+  let user = await User.findById(userId);
+
+  if (user) {
+    console.log(user);
+
+    console.log(user);
+    const token = await Token.findOne({ userId: userId });
+    const refreshedToken = await refreshToken(token, user);
+    const currentTimeStamp = Date.now();
+    const response = await fetch(
+      `https://api.spotify.com/v1/me/player/recently-played?before=${currentTimeStamp}&limit=50`,
+      {
+        headers: {
+          Authorization: `Bearer ${refreshedToken.token}`,
+        },
+      }
+    );
+    // TODO! Only one page for now
+
+    const insertData = response.tracks.map((track) => ({
+      trackTenantId: track.id,
+      userId: user.id,
+      trackInfo: track,
+    }));
+
+    Song.create(insertData);
+
+    res.json({ response });
+  }
+
   res.json();
 });
 

@@ -4,6 +4,7 @@ const querystring = require("querystring");
 const fetch = require("node-fetch");
 const User = require("../models/user");
 const Token = require("../models/tenantTokens");
+const { createUserJob } = require("../jobs");
 
 var generateRandomString = function (length) {
   var text = "";
@@ -64,6 +65,8 @@ router.get("/register", async (req, res) => {
         tenantId: userData.id,
         state,
       }).then((user) => {
+        // run a song parallel
+        createUserJob(user.id);
         Token.create({
           token: access_token,
           userId: user.id,
@@ -86,7 +89,8 @@ router.get("/login", function (req, res) {
       querystring.stringify({
         response_type: "code",
         client_id: process.env.PROJECT_CLIENT_ID,
-        scope: "user-read-email user-read-playback-state user-read-private",
+        scope:
+          "user-read-email user-read-playback-state user-read-private user-read-recently-played",
         redirect_uri: "http://localhost:8000/api/auth/register",
         show_dialog: true,
         // prompt: true,

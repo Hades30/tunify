@@ -26,6 +26,7 @@ const MySchema = new Schema({
 });
 
 MySchema.index({ location: "2dsphere" });
+MySchema.set("timestamps", true);
 
 const UserModel = model("User", MySchema);
 

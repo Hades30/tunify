@@ -16,6 +16,8 @@ const MySchema = new Schema({
   },
 });
 
+MySchema.set("timestamps", true);
+
 const TokenModel = model("Token", MySchema);
 
 module.exports = TokenModel;

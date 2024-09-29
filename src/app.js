@@ -3,6 +3,7 @@ const cors = require("cors");
 const config = require("./config/config");
 var cookieParser = require("cookie-parser");
 require("dotenv").config();
+const { setupBullBoard } = require("./jobs.js");
 
 const mongoose = require("mongoose");
 const app = express();
@@ -52,6 +53,8 @@ app.get("/", (req, res) => {
   console.log("hello world");
   res.send("hello world");
 });
+
+app.use("/admin/queues", setupBullBoard());
 
 // Start the server
 connectDB();
