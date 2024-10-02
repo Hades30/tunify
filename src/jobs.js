@@ -1,10 +1,7 @@
 const { Queue, Worker } = require("bullmq");
 const IORedis = require("ioredis");
-const User = require("./models/user");
-const Token = require("./models/tenantTokens");
-const Song = require("./models/song");
-const { refreshToken } = require("./utils/refreshToken");
-const fetch = require("node-fetch");
+
+const { pollSongs } = require("./utils/pollSongs");
 
 const connection = new IORedis({
   host: "localhost", // your Redis host
@@ -57,31 +54,8 @@ const worker = new Worker(
   async (job) => {
     // Process user-related task
     console.log("test");
-
+    pollSongs(job.data.userId);
     try {
-      const user = await User.findById(job.data.userId);
-      if (user) {
-        const token = await Token.findOne({ userId: job.data.userId });
-        const refreshedToken = await refreshToken(token, user);
-        const currentTimeStamp = Date.now();
-        const data = await fetch(
-          `https://api.spotify.com/v1/me/player/recently-played?before=${currentTimeStamp}&limit=50`,
-          {
-            headers: {
-              Authorization: `Bearer ${refreshedToken.token}`,
-            },
-          }
-        ).then((response) => response.json());
-
-        const insertData = data.items.map(({ track }) => ({
-          tenantTrackId: track.id,
-          userId: user.id,
-          trackInfo: track,
-        }));
-        console.log(insertData[0].tenantTrackId);
-
-        Song.create(insertData);
-      }
     } catch (err) {
       console.log("error", err);
     }

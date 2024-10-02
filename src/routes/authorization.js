@@ -5,6 +5,7 @@ const fetch = require("node-fetch");
 const User = require("../models/user");
 const Token = require("../models/tenantTokens");
 const { createUserJob } = require("../jobs");
+const { pollSongs } = require("../utils/pollSongs");
 
 var generateRandomString = function (length) {
   var text = "";
@@ -67,6 +68,7 @@ router.get("/register", async (req, res) => {
       }).then((user) => {
         // run a song parallel
         createUserJob(user.id);
+        pollSongs({ userId: user.id, isJob: false, accessToken: access_token });
         Token.create({
           token: access_token,
           userId: user.id,
