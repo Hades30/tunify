@@ -34,11 +34,13 @@ MySchema.post("save", function (doc) {
     .map((song) => song.trackInfo);
   const result = analyzeCompatibility(user1Songs, user2Songs);
   console.log(result);
-  Match.create({
-    userIds: doc.userIds,
-    matchedAt: doc.matchedAt,
-    matchData: result,
-  });
+  if (result.score > 80) {
+    Match.create({
+      userIds: doc.userIds,
+      matchedAt: doc.matchedAt,
+      matchData: result,
+    });
+  }
 
   // Add any custom logic here
   // e.g., send a welcome email, update another collection, etc.

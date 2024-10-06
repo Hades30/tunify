@@ -33,10 +33,13 @@ async function analyzeCompatibility(userAHistory, userBHistory) {
     1. Compare their song history based on songs, artists, and Album.
     2. Calculate a compatibility score (0 to 100) based on how many songs, artists, and Album they share.
     3. Identify which factor (song, artist, or album) had the largest impact on the compatibility.
-    4. If the most impactful factor is a **song**, return the specific song name.
-       If it's an **artist**, return the artist name.
-       If it's a **album**, return the album name.
-    5. Provide a compatibility score and a brief explanation of why that factor is the most impactful.
+    5. Return a JSON object with the following format:
+    {
+      "score": number,
+      "factor": "song" | "artist" | "album",
+      "factorValue": string,  // The most impactful song, artist, or album name
+      "explanation": string  // A brief explanation of why that factor is the most impactful
+    }
   `;
 
   try {
