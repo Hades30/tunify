@@ -1,9 +1,8 @@
-const { Configuration, OpenAIApi } = require("openai");
+const { OpenAI } = require("openai");
 
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY, // Ensure you have your API key in an environment variable
 });
-const openai = new OpenAIApi(configuration);
 
 async function analyzeCompatibility(userAHistory, userBHistory) {
   // Prepare the data to be sent in the prompt
