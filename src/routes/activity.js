@@ -4,7 +4,40 @@ const User = require("../models/user");
 const Song = require("../models/song");
 const fetch = require("node-fetch");
 const Token = require("../models/tenantTokens");
+const Potential = require("../models/potentialMatches");
 const { refreshToken } = require("../utils/refreshToken");
+
+async function findAndCreateMatchingPotentials(nearbyUsers, currentUser) {
+  const now = new Date();
+  const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000); // Subtract 15 minutes
+
+  // Build the $or query for multiple arrays
+  const orConditions = nearbyUsers.map((nearbyUser) => ({
+    userIds: { $all: [currentUser.id, nearbyUser.id] },
+  }));
+
+  // Run a single query with $or to check all arrays at once
+  const potentials = await Potential.find({
+    $or: orConditions, // Match any of the arrays
+    createdAt: { $gte: fifteenMinutesAgo }, // Only return documents created in the last 15 minutes
+  });
+  const alreadyMatchedUsers = potentials.map((potential) =>
+    potential.userIds[0] == currentUser.id
+      ? potential.userIds[1]
+      : potential.userIds[0]
+  );
+  nearbyUsers.forEach((nearbyUser) => {
+    if (!alreadyMatchedUsers.includes(nearbyUser.id)) {
+      Potential.create({
+        userIds: [nearbyUser.id, currentUser.id],
+        matchedAt: [nearbyUser.location, currentUser.location],
+      });
+    }
+  });
+
+  console.log("Matching documents:", potentials);
+}
+
 router.get("/currentPlayingTrack", async (req, res) => {
   const { userId } = req.query;
   const user = await User.findById(userId);
@@ -57,6 +90,7 @@ router.post("/updateCurrentLocation", async (req, res) => {
         $ne: userId,
       },
     });
+    findAndCreateMatchingPotentials(nearByUsers, user);
     res.json({ result });
   }
   res.json();
