@@ -18,23 +18,33 @@ const pollSongs = async ({ userId, isJob = true, accessToken }) => {
       const afterTimestamp = currentTimeStamp - 15 * 60 * 1000;
       url += `&after=${afterTimestamp}`;
     }
-    const data = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${
-          accessToken ? accessToken : refreshedToken.token
-        }`,
-      },
-    }).then((response) => response.json());
+    try {
+      const data = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${
+            accessToken ? accessToken : refreshedToken.token
+          }`,
+        },
+      })
+        .then((response) => {
+          return response.json();
+        })
+        .catch((err) => {
+          console.log(err);
+          throw err;
+        });
+      const insertData = data.items.map(({ track, played_at }) => ({
+        tenantTrackId: track.id,
+        userId: user.id,
+        trackInfo: track,
+        playedAt: new Date(played_at),
+      }));
+      console.log(insertData[0].tenantTrackId);
 
-    const insertData = data.items.map(({ track, played_at }) => ({
-      tenantTrackId: track.id,
-      userId: user.id,
-      trackInfo: track,
-      playedAt: new Date(played_at),
-    }));
-    console.log(insertData[0].tenantTrackId);
-
-    Song.create(insertData);
+      Song.create(insertData);
+    } catch (err) {
+      console.log(err);
+    }
   }
 };
 

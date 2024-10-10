@@ -25,16 +25,24 @@ const MySchema = new Schema({
   matchedAt: [GeoSchema],
 });
 
-MySchema.post("save", function (doc) {
-  const user1Songs = Song.find({ userId: doc.userIds[0] })
-    .limit(10)
-    .map((song) => song.trackInfo);
-  const user2Songs = Song.find({ userId: doc.userIds[1] })
-    .limit(10)
-    .map((song) => song.trackInfo);
+MySchema.post("save", async function (doc) {
+  let user1Songs = await Song.find({ userId: doc.userIds[0] })
+    .sort({
+      _id: -1,
+    })
+    .limit(10);
+  user1Songs = user1Songs.map((song) => song.trackInfo);
+  let user2Songs = await Song.find({ userId: doc.userIds[1] })
+    .sort({
+      _id: -1,
+    })
+    .limit(10);
+  user2Songs = user2Songs.map((song) => song.trackInfo);
+  console.log(user1Songs, user2Songs);
   const result = analyzeCompatibility(user1Songs, user2Songs);
   console.log(result);
   if (result.score > 80) {
+    console.log("match");
     Match.create({
       userIds: doc.userIds,
       matchedAt: doc.matchedAt,

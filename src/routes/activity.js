@@ -6,6 +6,7 @@ const fetch = require("node-fetch");
 const Token = require("../models/tenantTokens");
 const Potential = require("../models/potentialMatches");
 const { refreshToken } = require("../utils/refreshToken");
+// const Match = require("../models/match");
 
 async function findAndCreateMatchingPotentials(nearbyUsers, currentUser) {
   const now = new Date();
@@ -21,6 +22,7 @@ async function findAndCreateMatchingPotentials(nearbyUsers, currentUser) {
     $or: orConditions, // Match any of the arrays
     createdAt: { $gte: fifteenMinutesAgo }, // Only return documents created in the last 15 minutes
   });
+
   const alreadyMatchedUsers = potentials.map((potential) =>
     potential.userIds[0] == currentUser.id
       ? potential.userIds[1]
@@ -81,7 +83,7 @@ router.post("/updateCurrentLocation", async (req, res) => {
           $geometry: {
             type: "Point",
             // coordinates: [6.5279623, 3.3910865999999997],
-            coordinates: currentUser.location.coordinates,
+            coordinates: coordinates,
           },
           $maxDistance: 100000,
         },
@@ -90,7 +92,9 @@ router.post("/updateCurrentLocation", async (req, res) => {
         $ne: userId,
       },
     });
-    findAndCreateMatchingPotentials(nearByUsers, user);
+    console.log(nearByUsers);
+    if (nearByUsers.length > 0)
+      findAndCreateMatchingPotentials(nearByUsers, user);
     res.json({ result });
   }
   res.json();

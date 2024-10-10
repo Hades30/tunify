@@ -53,11 +53,16 @@ router.get("/register", async (req, res) => {
       ).then((response) => response.json());
 
       const { access_token, refresh_token } = data;
+      console.log(access_token);
       const userData = await fetch("https://api.spotify.com/v1/me", {
         headers: {
           Authorization: `Bearer ${access_token}`,
         },
-      }).then((response) => response.json());
+      }).then((res) => {
+        console.log(res);
+        return res.json();
+      });
+      console.log(userData);
 
       User.create({
         name: userData.display_name,

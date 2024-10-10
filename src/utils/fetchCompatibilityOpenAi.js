@@ -23,36 +23,37 @@ async function analyzeCompatibility(userAHistory, userBHistory) {
     ${userBHistory
       .map(
         (song, i) =>
-          `Song ${i + 1}: "${song.song}" by "${song.artists
+          `Song ${i + 1}: "${song.name}" by "${song.artists
             .map((artist) => artist.name)
             .join(",")}", Album: "${song.album.name}"`
       )
       .join("\n")}
     
-    Please:
-    1. Compare their song history based on songs, artists, and Album.
-    2. Calculate a compatibility score (0 to 100) based on how many songs, artists, and Album they share.
-    3. Identify which factor (song, artist, or album) had the largest impact on the compatibility.
-    5. Return a JSON object with the following format:
-    {
-      "score": number,
-      "factor": "song" | "artist" | "album",
-      "factorValue": string,  // The most impactful song, artist, or album name
-      "explanation": string  // A brief explanation of why that factor is the most impactful
-    }
+      Based on the above information, please provide the stringified JSON only once.
   `;
 
   try {
     // Send the request to OpenAI API
-    const response = await openai.createCompletion({
-      model: "gpt-4", // You can use a specific model version if needed
-      prompt: prompt,
-      max_tokens: 300,
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo", // You can use a specific model version if needed
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a helpful assistant that analyzes compatibility between two users based on their song history. Compatibility score is calculated based on the common songs, artists, and albums. Compare their song history based on songs, artists, and Album. 2. Calculate a compatibility score (0 to 100) based on how many songs, artists, and Album they share. 3. Identify which factor (song, artist, or album) had the largest impact on the high compatibility if the score is more than  80. Return a stringified JSON object with the following format: { `score`: number,   `factor`: `song` | `artist` | `album`, `factorValue`: string, explanation: string} where factorValue is The most impactful song, artist, or album name in their high compatibility. It could be a common song, artist, or album, also explanation is the brief explanation of why that factor is the most impactful. Just return the stringified JSON object. nothing else.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
     });
 
-    const result = response.data.choices[0].text.trim();
-    console.log(result); // Process or return this result as needed
-    return result;
+    const result = response.choices[0].message.content;
+    console.log(result);
+    let f = JSON.parse(result);
+    console.log(f);
+    return JSON.parse(result);
   } catch (error) {
     console.error("Error calling OpenAI API:", error);
   }
